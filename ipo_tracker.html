@@ -896,75 +896,58 @@ function calcGrade(ipo) {
   return { grade: 'D', verdict: 'AVOID', pepiteIndex: score };
 }
 
-// ─── FETCH FMP IPO CALENDAR ──────────────────────────────────────────────────
+// ─── SEC EDGAR IPO FETCH ─────────────────────────────────────────────────────
 
 async function fetchIPOs() {
   const list = document.getElementById('ipo-list');
   if (list) list.innerHTML = '<div class="empty"><div class="dot-pulse" style="justify-content:center;margin-bottom:8px;"><span></span><span></span><span></span></div>Chargement des IPOs\u2026</div>';
 
   try {
-    const from = new Date(); from.setDate(from.getDate() - 7);
-    const to   = new Date(); to.setDate(to.getDate() + 14);
-    const fmt  = d => d.toISOString().split('T')[0];
-
-    // Requête simple sans headers — évite le preflight CORS
-    const url = FMP_BASE + '/ipo_calendar?from=' + fmt(from) + '&to=' + fmt(to);
-
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-    const res = await fetch(url, { signal: controller.signal, mode: 'cors' });
+    const res = await fetch(PROXY_BASE + '/ipos', { signal: controller.signal });
     clearTimeout(timeoutId);
 
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    if (!Array.isArray(data) || data.length === 0) throw new Error('Pas de donn\u00e9es');
+    const items = data?.ipos;
+    if (!Array.isArray(items) || items.length === 0) throw new Error('Pas de donn\u00e9es');
 
-    IPOS = data.map((item, idx) => {
-      const sec     = mapSector(item.sector);
+    IPOS = items.map((item, idx) => {
       const status  = mapStatus(item.date);
-      const grading = calcGrade({ marketCap: item.marketCap, exchange: item.exchange, status });
-
-      let ipoPrice = null;
-      if (item.price) ipoPrice = parseFloat(item.price);
-      if (!ipoPrice && item.priceRange) {
-        const parts = item.priceRange.split('-');
-        if (parts.length === 2) ipoPrice = (parseFloat(parts[0]) + parseFloat(parts[1])) / 2;
-      }
+      const grading = calcGrade({ exchange: item.exchange, status });
 
       return {
         id: idx + 1,
-        name: item.company || item.name || 'N/A',
-        ticker: item.symbol || '\u2014',
-        sector: sec.key,
-        sectorLabel: sec.label,
-        exchange: item.exchange || 'N/A',
-        country: item.country === 'FR' ? '\uD83C\uDDEB\uD83C\uDDF7' : (item.country === 'GB' ? '\uD83C\uDDEC\uD83C\uDDE7' : '\uD83C\uDDFA\uD83C\uDDF8'),
+        name: item.name || 'N/A',
+        ticker: item.ticker || '\u2014',
+        sector: 'other',
+        sectorLabel: item.formType || 'S-1',
+        exchange: item.exchange || '\u2014',
+        country: '\uD83C\uDDFA\uD83C\uDDF8',
         status,
-        ipoDate: item.date,
-        priceRange: item.priceRange || '\u2014',
-        ipoPrice,
+        ipoDate: item.date || WD.today,
+        priceRange: '\u2014',
+        ipoPrice: null,
         currentPrice: null,
-        marketCap: item.marketCap ? (item.marketCap / 1e9).toFixed(1) + 'B' : '\u2014',
+        marketCap: '\u2014',
         revenue: '\u2014', revenueGrowth: '\u2014', grossMargin: '\u2014', burnRate: '\u2014',
-        underwriter: item.underwriter || '\u2014',
-        vcBacking: '\u2014', lockup: '180 jours',
-        float: item.floatShares ? (item.floatShares * 100).toFixed(0) + '%' : '\u2014',
-        tam: '\u2014',
+        underwriter: '\u2014', vcBacking: '\u2014', lockup: '\u2014', float: '\u2014', tam: '\u2014',
         grade: grading.grade,
         verdict: grading.verdict,
         pepiteIndex: grading.pepiteIndex,
-        scores: { fondamentaux: 6, marche: 6, timing: 6, vc: 5, sentiment: 5 },
-        tags: [sec.label, item.exchange || ''].filter(Boolean),
-        description: item.description || ('IPO de ' + (item.company || item.symbol) + ' sur ' + (item.exchange || 'N/A') + '.'),
-        risks: ['Donn\u00e9es fondamentales en cours de chargement', 'Consulter le prospectus officiel'],
-        news: [],
+        scores: { fondamentaux: 5, marche: 5, timing: 5, vc: 5, sentiment: 5 },
+        tags: [item.formType || 'S-1', 'SEC EDGAR'],
+        description: 'D\u00e9p\u00f4t ' + (item.formType || 'S-1') + ' aupr\u00e8s de la SEC. Voir le prospectus complet sur EDGAR.',
+        risks: ['Donn\u00e9es en cours de chargement — consulter le prospectus SEC'],
+        news: item.filingUrl ? [{ source: 'SEC EDGAR', headline: 'Voir le d\u00e9p\u00f4t officiel', date: item.date, url: item.filingUrl }] : [],
       };
     });
 
     iposLoaded = true;
 
   } catch(e) {
-    console.warn('FMP fetch failed, using fallback:', e.message);
+    console.warn('EDGAR fetch failed, using fallback:', e.message);
     IPOS = IPOS_FALLBACK.map(ipo => ({ ...ipo, ipoDate: WD[ipo.dayKey] || WD.today }));
     iposLoaded = true;
   }
