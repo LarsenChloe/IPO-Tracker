@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>IPO Lens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f9f8f6;
+    --surface: #ffffff;
+    --border: #e8e6e1;
+    --text: #1a1916;
+    --muted: #8a8780;
+    --accent: #1a1916;
+    --green: #1a6b4a;
+    --green-bg: #edf7f2;
+    --red: #b83232;
+    --red-bg: #fdf0f0;
+    --amber: #8a5c1a;
+    --amber-bg: #fdf5e8;
+    --grade-a: #1a6b4a;
+    --grade-b: #2a5fa8;
+    --grade-c: #8a5c1a;
+    --grade-d: #b83232;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow: 0 2px 16px rgba(0,0,0,0.06);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    max-width: 430px;
+    margin: 0 auto;
+  }
+
+  /* HEADER */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(249,248,246,0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 16px 20px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .logo span { font-style: italic; color: var(--muted); }
+
+  .header-badge {
+    font-size: 11px;
+    font-weight: 500;
+    background: var(--green-bg);
+    color: var(--green);
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+  }
+
+  /* NAV TABS */
+  .nav-tabs {
+    display: flex;
+    gap: 0;
+  }
+
+  .nav-tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    letter-spacing: 0.2px;
+  }
+
+  .nav-tab.active {
+    color: var(--text);
+    border-bottom-color: var(--text);
+  }
+
+  /* PAGES */
+  .page { display: none; padding: 20px; padding-bottom: 40px; }
+  .page.active { display: block; }
+
+  /* DAY TABS */
+  .day-tabs {
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .day-tabs::-webkit-scrollbar { display: none; }
+
+  .day-tab {
+    flex-shrink: 0;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+    white-space: nowrap;
+    letter-spacing: 0.2px;
+  }
+
+  .day-tab.active {
+    color: var(--text);
+    border-bottom-color: var(--text);
+    font-weight: 600;
+  }
+
+  .day-tab .day-dot {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    background: var(--green);
+    border-radius: 50%;
+    margin-left: 5px;
+    vertical-align: middle;
+    margin-bottom: 1px;
+  }
+
+  /* SECTOR FILTER ROW */
+  .sector-filter-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    gap: 10px;
+  }
+
+  .sector-select-wrap {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .sector-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 28px 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .sector-select:focus { border-color: var(--text); }
+
+  .sector-select-arrow {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    font-size: 9px;
+    color: var(--muted);
+  }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  /* IPO CARD */
+  .ipo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: var(--shadow);
+  }
+
+  .ipo-card:active { transform: scale(0.985); }
+
+  .ipo-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .ipo-card-left { display: flex; align-items: center; gap: 12px; }
+
+  .ipo-logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    font-family: 'DM Serif Display', serif;
+    flex-shrink: 0;
+  }
+
+  .ipo-name { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+  .ipo-meta { font-size: 12px; color: var(--muted); }
+
+  .grade-badge {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'DM Serif Display', serif;
+    flex-shrink: 0;
+  }
+
+  .grade-A { background: var(--green-bg); color: var(--grade-a); }
+  .grade-B { background: #e8f0fc; color: var(--grade-b); }
+  .grade-C { background: var(--amber-bg); color: var(--grade-c); }
+  .grade-D { background: var(--red-bg); color: var(--grade-d); }
+
+  .ipo-card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .ipo-stats { display: flex; gap: 16px; }
+
+  .ipo-stat { }
+  .ipo-stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+  .ipo-stat-value { font-size: 14px; font-weight: 600; }
+
+  .perf-pill {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+  .perf-pos { background: var(--green-bg); color: var(--green); }
+  .perf-neg { background: var(--red-bg); color: var(--red); }
+  .perf-neu { background: var(--bg); color: var(--muted); }
+
+  .status-pill {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+  .status-upcoming { background: var(--amber-bg); color: var(--amber); }
+  .status-live { background: var(--green-bg); color: var(--green); }
+  .status-listed { background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+
+  /* PERFORMANCE PAGE */
+  .perf-summary {
+    background: var(--text);
+    color: white;
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .perf-summary-title {
+    font-size: 12px;
+    font-weight: 500;
+    opacity: 0.6;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .perf-summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  .perf-summary-item { }
+  .perf-summary-label { font-size: 10px; opacity: 0.6; margin-bottom: 4px; }
+  .perf-summary-value { font-size: 20px; font-weight: 600; font-family: 'DM Serif Display', serif; }
+  .perf-summary-value.pos { color: #5dd4a0; }
+  .perf-summary-value.neg { color: #f08080; }
+
+  .sector-block { margin-bottom: 20px; }
+
+  .sector-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .sector-name { font-size: 14px; font-weight: 600; }
+  .sector-avg { font-size: 12px; color: var(--muted); }
+
+  .perf-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .perf-row:active { transform: scale(0.985); }
+
+  .perf-row-left { display: flex; align-items: center; gap: 10px; }
+  .perf-row-name { font-size: 14px; font-weight: 500; }
+  .perf-row-date { font-size: 11px; color: var(--muted); }
+  .perf-row-right { display: flex; align-items: center; gap: 10px; }
+
+  /* MODAL / FICHE */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    width: 100%;
+    max-width: 430px;
+    height: 92vh;
+    background: var(--bg);
+    border-radius: 24px 24px 0 0;
+    z-index: 201;
+    overflow-y: auto;
+    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .modal.open {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .modal-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 12px auto 0;
+  }
+
+  .modal-header {
+    padding: 20px 20px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .modal-logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+    font-family: 'DM Serif Display', serif;
+    flex-shrink: 0;
+  }
+
+  .modal-title { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+  .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .modal-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .tag {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .modal-body { padding: 0 20px 40px; }
+
+  /* STATS GRID */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+  }
+
+  .stat-box-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .stat-box-value { font-size: 18px; font-weight: 600; font-family: 'DM Serif Display', serif; }
+  .stat-box-value.pos { color: var(--green); }
+  .stat-box-value.neg { color: var(--red); }
+  .stat-box-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* RADAR CHART */
+  .radar-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .radar-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  canvas#radar { display: block; margin: 0 auto; }
+
+  .radar-legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .radar-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .radar-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text);
+    flex-shrink: 0;
+  }
+
+  /* GRADING SECTION */
+  .grading-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .grading-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .grading-title { font-size: 13px; font-weight: 600; }
+
+  .big-grade {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    font-weight: 700;
+    font-family: 'DM Serif Display', serif;
+  }
+
+  .verdict-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+
+  .verdict-buy { background: var(--green-bg); color: var(--green); }
+  .verdict-watch { background: var(--amber-bg); color: var(--amber); }
+  .verdict-avoid { background: var(--red-bg); color: var(--red); }
+
+  .thesis-box {
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text);
+    margin-bottom: 14px;
+    border-left: 3px solid var(--border);
+    position: relative;
+    min-height: 60px;
+  }
+
+  .thesis-loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .dot-pulse {
+    display: flex;
+    gap: 4px;
+  }
+
+  .dot-pulse span {
+    width: 5px;
+    height: 5px;
+    background: var(--muted);
+    border-radius: 50%;
+    animation: pulse 1.2s infinite;
+  }
+
+  .dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
+  .dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes pulse {
+    0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1); }
+  }
+
+  .risks-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .risk-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .risk-icon { color: var(--red); flex-shrink: 0; margin-top: 1px; }
+
+  /* NEWS SECTION */
+  .news-section { margin-bottom: 20px; }
+  .section-title { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+
+  .news-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    margin-bottom: 8px;
+  }
+
+  .news-source {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .news-headline { font-size: 13px; font-weight: 500; line-height: 1.4; margin-bottom: 4px; }
+  .news-date { font-size: 11px; color: var(--muted); }
+
+  /* CTA */
+  .cta-bar {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .btn-primary {
+    flex: 1;
+    background: var(--text);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .btn-primary:active { opacity: 0.8; }
+
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .btn-secondary:active { opacity: 0.8; }
+
+  /* DIVIDER */
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+  /* SCORE BARS */
+  .score-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .score-bar-label { font-size: 12px; color: var(--muted); width: 90px; flex-shrink: 0; }
+
+  .score-bar-track {
+    flex: 1;
+    height: 6px;
+    background: var(--bg);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--text);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .score-bar-value { font-size: 12px; font-weight: 600; width: 24px; text-align: right; flex-shrink: 0; }
+
+  /* EMPTY STATE */
+  .empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; }
+
+
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="logo">IPO <span>Lens</span></div>
+    <div class="header-badge">● Live</div>
+  </div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="switchTab('ipo')">IPOs</div>
+    <div class="nav-tab" onclick="switchTab('bourse')">Bourse Globale</div>
+  </div>
+</div>
+
+<!-- PAGE IPO -->
+<div class="page active" id="page-ipo">
+
+  <!-- BANDEAU WEEK-END -->
+  <div id="weekend-banner" style="display:none;align-items:center;gap:8px;background:var(--amber-bg);border:1px solid #e8d5b0;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--amber);">
+    <span>🔔</span>
+    <span>Marchés fermés ce week-end — données de la dernière semaine de trading</span>
+  </div>
+
+  <!-- ONGLETS JOURS -->
+  <div class="day-tabs" id="day-tabs"></div>
+
+  <!-- FILTRE SECTEUR + COMPTEUR -->
+  <div class="sector-filter-row">
+    <div class="section-label" id="ipo-count" style="margin-bottom:0;">—</div>
+    <div class="sector-select-wrap">
+      <select class="sector-select" id="sector-select" onchange="setSector(this.value)">
+        <option value="all">Tous les secteurs</option>
+        <option value="tech">Tech / IA</option>
+        <option value="health">Santé</option>
+        <option value="energy">Énergie</option>
+        <option value="fintech">Fintech</option>
+        <option value="media">Médias</option>
+        <option value="industry">Industrie</option>
+      </select>
+      <span class="sector-select-arrow">▾</span>
+    </div>
+  </div>
+
+  <div id="ipo-list"></div>
+</div>
+
+<!-- PAGE BOURSE GLOBALE -->
+<div class="page" id="page-bourse">
+
+  <!-- STATUS BAR LIVE -->
+  <div id="live-status" style="font-size:11px;color:#8a8780;margin-bottom:14px;display:flex;align-items:center;gap:4px;">
+    <span style="color:#8a8780;">● En attente de données…</span>
+  </div>
+
+  <!-- HEATMAP SECTORIELLE -->
+  <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8780;margin-bottom:12px;">Heatmap sectorielle · semaine</div>
+  <div id="heatmap-grid"></div>
+
+  <!-- TOP MOVERS -->
+  <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8780;margin:20px 0 12px;">Top movers · aujourd'hui</div>
+  <div id="movers-list"></div>
+
+</div>
+
+<!-- MODAL FICHE -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal()"></div>
+<div class="modal" id="modal">
+  <div class="modal-handle"></div>
+  <div id="modal-content"></div>
+</div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+
+// ─── CALENDRIER BOURSIER ─────────────────────────────────────────────────────
+// Règle : NYSE/NASDAQ ouverts lun→ven uniquement.
+// Si on est sam (6) ou dim (0), le "dernier jour de trading" = vendredi passé.
+// La semaine de référence est toujours la dernière semaine de trading complète
+// dont fait partie ce vendredi (ou aujourd'hui si lun-ven).
+
+function getWeekDates() {
+  function iso(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    return y+'-'+m+'-'+dd;
+  }
+
+  const now = new Date();
+  now.setHours(0,0,0,0);
+  const dow = now.getDay(); // 0=dim, 6=sam
+
+  // Dernier jour de trading (vendredi si week-end)
+  const lastTrading = new Date(now);
+  if (dow === 0) lastTrading.setDate(now.getDate() - 2); // dim → ven
+  if (dow === 6) lastTrading.setDate(now.getDate() - 1); // sam → ven
+
+  // "Aujourd'hui" au sens boursier
+  const tradingToday = new Date(lastTrading);
+
+  // "Hier" au sens boursier (vendredi si lundi, sinon j-1 ouvré)
+  const tradingYesterday = new Date(lastTrading);
+  const ltdow = lastTrading.getDay();
+  if (ltdow === 1) tradingYesterday.setDate(lastTrading.getDate() - 3); // lun → ven préc.
+  else tradingYesterday.setDate(lastTrading.getDate() - 1);
+
+  // Lundi de la semaine du dernier jour de trading
+  const ltdow2 = lastTrading.getDay();
+  const monday = new Date(lastTrading);
+  monday.setDate(lastTrading.getDate() - (ltdow2 - 1));
+
+  const dates = {};
+  ['lun','mar','mer','jeu','ven'].forEach((k, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    dates[k] = iso(d);
+  });
+
+  dates.today = iso(tradingToday);
+  dates.hier  = iso(tradingYesterday);
+
+  // Label lisible pour l'UI
+  const isWeekend = dow === 0 || dow === 6;
+  dates.todayLabel  = isWeekend ? 'Vendredi' : "Aujourd'hui";
+  dates.hierLabel   = isWeekend ? 'Jeudi' : (ltdow2 === 1 ? 'Vendredi' : 'Hier');
+  dates.isWeekend   = isWeekend;
+
+  return dates;
+}
+
+const WD = getWeekDates();
+
+// ─── FMP API ─────────────────────────────────────────────────────────────────
+
+const FMP_KEY = 'pIzBoQBt5HwovKLVOVkRIZdklUIo4mdq';
+const FMP_BASE = 'https://financialmodelingprep.com/api/v3';
+
+// Cache IPOs chargées depuis FMP
+let IPOS = [];
+let iposLoaded = false;
+
+// Données de fallback si FMP ne répond pas
+const IPOS_FALLBACK = [
+  { id:1, dayKey:'today', name:'CoreVault AI', ticker:'CVAI', sector:'tech', sectorLabel:'Intelligence Artificielle', exchange:'NASDAQ', country:'\uD83C\uDDFA\uD83C\uDDF8', status:'live', priceRange:'$18\u2013$22', ipoPrice:20, currentPrice:23.4, marketCap:'4.2B', revenue:'$312M', revenueGrowth:'+187%', grossMargin:'74%', burnRate:'-$28M/trim', underwriter:'Goldman Sachs', vcBacking:'Sequoia, a16z', lockup:'180 jours', float:'12%', tam:'$180B', grade:'A', verdict:'BUY', pepiteIndex:91, scores:{fondamentaux:9,marche:8,timing:7,vc:10,sentiment:8}, tags:['AI','SaaS B2B','Hypercroissance'], description:'Plateforme d\u2019infrastructure IA pour entreprises.', risks:['Valorisation tendue vs peers','D\u00e9pendance \u00e0 3 clients majeurs','March\u00e9 concurrentiel'], news:[{source:'Bloomberg',headline:'CoreVault AI pr\u00e9pare une IPO \u00e0 4,2 milliards',date:'Il y a 2j'}] },
+  { id:2, dayKey:'today', name:'Meridian Health', ticker:'MRDH', sector:'health', sectorLabel:'Medtech', exchange:'NYSE', country:'\uD83C\uDDFA\uD83C\uDDF8', status:'live', priceRange:'$24\u2013$28', ipoPrice:26, currentPrice:31.4, marketCap:'2.8B', revenue:'$198M', revenueGrowth:'+94%', grossMargin:'81%', burnRate:'-$12M/trim', underwriter:'Morgan Stanley', vcBacking:'NEA, General Catalyst', lockup:'180 jours', float:'18%', tam:'$45B', grade:'A', verdict:'BUY', pepiteIndex:87, scores:{fondamentaux:8,marche:9,timing:8,vc:8,sentiment:9}, tags:['Medtech','SaaS','Rentable'], description:'Logiciel de gestion des soins ambulatoires.', risks:['Exposition Medicaid','Pipeline concentr\u00e9','Pression marges'], news:[{source:'Reuters',headline:'Meridian bondit de +20% le premier jour',date:'Il y a 3j'}] },
+  { id:3, dayKey:'hier', name:'Solara Energy', ticker:'SLRA', sector:'energy', sectorLabel:'\u00c9nergie propre', exchange:'NYSE', country:'\uD83C\uDDFA\uD83C\uDDF8', status:'listed', priceRange:'$14\u2013$17', ipoPrice:15, currentPrice:11.2, marketCap:'890M', revenue:'$142M', revenueGrowth:'+31%', grossMargin:'38%', burnRate:'-$41M/trim', underwriter:'Jefferies', vcBacking:'Breakthrough Energy', lockup:'90 jours', float:'28%', tam:'$320B', grade:'C', verdict:'WATCH', pepiteIndex:52, scores:{fondamentaux:4,marche:7,timing:3,vc:6,sentiment:4}, tags:['Cleantech','Capital intensif'], description:'D\u00e9veloppeur de parcs solaires utility-scale.', risks:['Lock-up expir\u00e9','Retards r\u00e9glementaires','Burn rate \u00e9lev\u00e9'], news:[{source:'Bloomberg',headline:'Solara chute apr\u00e8s expiration du lock-up',date:'Il y a 2j'}] },
+  { id:4, dayKey:'lun', name:'NordFinance', ticker:'NFIN', sector:'fintech', sectorLabel:'Fintech / N\u00e9obanque', exchange:'Euronext', country:'\uD83C\uDDF8\uD83C\uDDEA', status:'listed', priceRange:'\u20ac22\u2013\u20ac26', ipoPrice:24, currentPrice:29.8, marketCap:'3.4B', revenue:'$284M', revenueGrowth:'+67%', grossMargin:'62%', burnRate:'+$14M/trim', underwriter:'Nordea Markets', vcBacking:'Accel, EQT Ventures', lockup:'180 jours', float:'22%', tam:'$90B', grade:'A', verdict:'BUY', pepiteIndex:83, scores:{fondamentaux:8,marche:8,timing:9,vc:7,sentiment:7}, tags:['N\u00e9obanque','Rentable','Europe'], description:'N\u00e9obanque scandinave rentable. 6.2M utilisateurs.', risks:['Expansion hors Europe','R\u00e9gulation CRR3','Concurrence Revolut'], news:[{source:'FT',headline:'NordFinance d\u00e9passe 6 millions d\u2019utilisateurs',date:'Il y a 3j'}] },
+  { id:5, dayKey:'mar', name:'PharmaGen', ticker:'PHMG', sector:'health', sectorLabel:'Biotech', exchange:'NASDAQ', country:'\uD83C\uDDFA\uD83C\uDDF8', status:'upcoming', priceRange:'$16\u2013$20', ipoPrice:null, currentPrice:null, marketCap:'1.8B', revenue:'$89M', revenueGrowth:'+142%', grossMargin:'71%', burnRate:'-$19M/trim', underwriter:'JP Morgan', vcBacking:'OrbiMed, RA Capital', lockup:'180 jours', float:'14%', tam:'$62B', grade:'B', verdict:'WATCH', pepiteIndex:69, scores:{fondamentaux:7,marche:7,timing:6,vc:8,sentiment:6}, tags:['Biotech','Oncologie','Phase III'], description:'Biotech oncologie de pr\u00e9cision. Phase III en cours.', risks:['Phase III non final','Pipeline concentr\u00e9','FDA incertaine'], news:[{source:'BioPharma Dive',headline:'R\u00e9sultats Phase III positifs',date:'Il y a 3j'}] },
+  { id:6, dayKey:'mer', name:'GridScale', ticker:'GRSC', sector:'energy', sectorLabel:'Stockage \u00c9nergie', exchange:'NYSE', country:'\uD83C\uDDFA\uD83C\uDDF8', status:'upcoming', priceRange:'$22\u2013$26', ipoPrice:null, currentPrice:null, marketCap:'2.1B', revenue:'$167M', revenueGrowth:'+88%', grossMargin:'44%', burnRate:'-$22M/trim', underwriter:'Bank of America', vcBacking:'Breakthrough Energy', lockup:'180 jours', float:'19%', tam:'$280B', grade:'B', verdict:'BUY', pepiteIndex:76, scores:{fondamentaux:7,marche:9,timing:7,vc:7,sentiment:7}, tags:['Stockage','Grid','IRA'], description:'Stockage d\u2019\u00e9nergie batteries lithium-fer grid-scale.', risks:['D\u00e9pendance IRA','Pression mati\u00e8res premi\u00e8res','Concurrence Tesla'], news:[{source:'Bloomberg NEF',headline:'Contrat 400M$ avec le DOE',date:'Il y a 4j'}] },
+];
+
+// Mapper secteur FMP → notre secteur interne
+function mapSector(fmpSector) {
+  const s = (fmpSector || '').toLowerCase();
+  if (s.includes('tech') || s.includes('software') || s.includes('semiconduct')) return { key: 'tech', label: 'Tech / Software' };
+  if (s.includes('health') || s.includes('bio') || s.includes('pharma') || s.includes('medical')) return { key: 'health', label: 'Santé / Biotech' };
+  if (s.includes('energy') || s.includes('oil') || s.includes('gas') || s.includes('clean')) return { key: 'energy', label: '\u00c9nergie' };
+  if (s.includes('financ') || s.includes('bank') || s.includes('insur')) return { key: 'fintech', label: 'Finance' };
+  if (s.includes('media') || s.includes('entertainment') || s.includes('communication')) return { key: 'media', label: 'M\u00e9dias' };
+  if (s.includes('industrial') || s.includes('aerospace') || s.includes('defense') || s.includes('transport')) return { key: 'industry', label: 'Industrie' };
+  if (s.includes('consumer') || s.includes('retail')) return { key: 'conso', label: 'Consommation' };
+  if (s.includes('real estate')) return { key: 'immo', label: 'Immobilier' };
+  return { key: 'other', label: fmpSector || 'Autre' };
+}
+
+function mapStatus(fmpDate) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(fmpDate + 'T12:00:00');
+  if (d > today) return 'upcoming';
+  const diff = (today - d) / 86400000;
+  if (diff <= 1) return 'live';
+  return 'listed';
+}
+
+function calcGrade(ipo) {
+  // Score simple basé sur les données FMP disponibles
+  let score = 50;
+  if (ipo.marketCap) {
+    const mc = parseFloat(ipo.marketCap);
+    if (mc > 5000) score += 15;
+    else if (mc > 1000) score += 8;
+  }
+  if (ipo.exchange === 'NASDAQ' || ipo.exchange === 'NYSE') score += 10;
+  if (ipo.status === 'live') score += 10;
+  if (score >= 80) return { grade: 'A', verdict: 'BUY', pepiteIndex: score };
+  if (score >= 65) return { grade: 'B', verdict: 'WATCH', pepiteIndex: score };
+  if (score >= 50) return { grade: 'C', verdict: 'WATCH', pepiteIndex: score };
+  return { grade: 'D', verdict: 'AVOID', pepiteIndex: score };
+}
+
+// ─── FETCH FMP IPO CALENDAR ──────────────────────────────────────────────────
+
+async function fetchIPOs() {
+  const list = document.getElementById('ipo-list');
+  if (list) list.innerHTML = '<div class="empty"><div class="dot-pulse" style="justify-content:center;margin-bottom:8px;"><span></span><span></span><span></span></div>Chargement des IPOs\u2026</div>';
+
+  try {
+    const from = new Date(); from.setDate(from.getDate() - 7);
+    const to   = new Date(); to.setDate(to.getDate() + 14);
+    const fmt  = d => d.toISOString().split('T')[0];
+
+    // Requête simple sans headers — évite le preflight CORS
+    const url = FMP_BASE + '/ipo_calendar?from=' + fmt(from) + '&to=' + fmt(to) + '&apikey=' + FMP_KEY;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(url, { signal: controller.signal, mode: 'cors' });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length === 0) throw new Error('Pas de donn\u00e9es');
+
+    IPOS = data.map((item, idx) => {
+      const sec     = mapSector(item.sector);
+      const status  = mapStatus(item.date);
+      const grading = calcGrade({ marketCap: item.marketCap, exchange: item.exchange, status });
+
+      let ipoPrice = null;
+      if (item.price) ipoPrice = parseFloat(item.price);
+      if (!ipoPrice && item.priceRange) {
+        const parts = item.priceRange.split('-');
+        if (parts.length === 2) ipoPrice = (parseFloat(parts[0]) + parseFloat(parts[1])) / 2;
+      }
+
+      return {
+        id: idx + 1,
+        name: item.company || item.name || 'N/A',
+        ticker: item.symbol || '\u2014',
+        sector: sec.key,
+        sectorLabel: sec.label,
+        exchange: item.exchange || 'N/A',
+        country: item.country === 'FR' ? '\uD83C\uDDEB\uD83C\uDDF7' : (item.country === 'GB' ? '\uD83C\uDDEC\uD83C\uDDE7' : '\uD83C\uDDFA\uD83C\uDDF8'),
+        status,
+        ipoDate: item.date,
+        priceRange: item.priceRange || '\u2014',
+        ipoPrice,
+        currentPrice: null,
+        marketCap: item.marketCap ? (item.marketCap / 1e9).toFixed(1) + 'B' : '\u2014',
+        revenue: '\u2014', revenueGrowth: '\u2014', grossMargin: '\u2014', burnRate: '\u2014',
+        underwriter: item.underwriter || '\u2014',
+        vcBacking: '\u2014', lockup: '180 jours',
+        float: item.floatShares ? (item.floatShares * 100).toFixed(0) + '%' : '\u2014',
+        tam: '\u2014',
+        grade: grading.grade,
+        verdict: grading.verdict,
+        pepiteIndex: grading.pepiteIndex,
+        scores: { fondamentaux: 6, marche: 6, timing: 6, vc: 5, sentiment: 5 },
+        tags: [sec.label, item.exchange || ''].filter(Boolean),
+        description: item.description || ('IPO de ' + (item.company || item.symbol) + ' sur ' + (item.exchange || 'N/A') + '.'),
+        risks: ['Donn\u00e9es fondamentales en cours de chargement', 'Consulter le prospectus officiel'],
+        news: [],
+      };
+    });
+
+    iposLoaded = true;
+
+  } catch(e) {
+    console.warn('FMP fetch failed, using fallback:', e.message);
+    IPOS = IPOS_FALLBACK.map(ipo => ({ ...ipo, ipoDate: WD[ipo.dayKey] || WD.today }));
+    iposLoaded = true;
+  }
+
+  buildDayTabs();
+  renderIPOs();
+}
+
+const watchlist = new Set();
+let currentDay = 'today';
+let currentSector = 'all';
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+
+function perf(ipo) {
+  if (!ipo.ipoPrice || !ipo.currentPrice) return null;
+  return ((ipo.currentPrice - ipo.ipoPrice) / ipo.ipoPrice * 100).toFixed(1);
+}
+
+function perfClass(p) {
+  if (p === null) return 'perf-neu';
+  return parseFloat(p) >= 0 ? 'perf-pos' : 'perf-neg';
+}
+
+function perfLabel(ipo) {
+  const p = perf(ipo);
+  if (p === null) return ipo.status === 'upcoming' ? '\u00c0 venir' : '\u2014';
+  return (parseFloat(p) >= 0 ? '+' : '') + p + '%';
+}
+
+function verdictClass(v) {
+  return v === 'BUY' ? 'verdict-buy' : v === 'WATCH' ? 'verdict-watch' : 'verdict-avoid';
+}
+
+function verdictIcon(v) {
+  return v === 'BUY' ? '\u2191' : v === 'WATCH' ? '\u25c9' : '\u2193';
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+// ─── DAY TABS ────────────────────────────────────────────────────────────────
+
+function buildDayTabs() {
+  // Compter les IPOs par date
+  const countByDate = {};
+  IPOS.forEach(ipo => {
+    countByDate[ipo.ipoDate] = (countByDate[ipo.ipoDate] || 0) + 1;
+  });
+
+  const tabs = [
+    { key: 'today', label: WD.todayLabel, date: WD.today },
+    { key: 'hier',  label: WD.hierLabel,  date: WD.hier  },
+    { key: 'lun',   label: 'Lun',         date: WD.lun   },
+    { key: 'mar',   label: 'Mar',         date: WD.mar   },
+    { key: 'mer',   label: 'Mer',         date: WD.mer   },
+    { key: 'jeu',   label: 'Jeu',         date: WD.jeu   },
+    { key: 'ven',   label: 'Ven',         date: WD.ven   },
+  ];
+
+  const container = document.getElementById('day-tabs');
+  container.innerHTML = tabs.map(tab => {
+    const count = countByDate[tab.date] || 0;
+    const dot = count > 0 ? '<span class="day-dot"></span>' : '';
+    const active = tab.key === currentDay ? 'active' : '';
+    return `<div class="day-tab ${active}" onclick="setDay('${tab.key}')">${tab.label}${dot}</div>`;
+  }).join('');
+
+  // Bandeau week-end
+  const banner = document.getElementById('weekend-banner');
+  if (WD.isWeekend) {
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+function setDay(day) {
+  currentDay = day;
+  buildDayTabs();
+  renderIPOs();
+}
+
+function setSector(val) {
+  currentSector = val;
+  renderIPOs();
+}
+
+// ─── RENDER IPO LIST ─────────────────────────────────────────────────────────
+
+function renderIPOs() {
+  const list = document.getElementById('ipo-list');
+  const countEl = document.getElementById('ipo-count');
+
+  const dayDate = WD[currentDay];
+
+  let filtered = IPOS.filter(ipo => {
+    const matchDay = ipo.ipoDate === dayDate;
+    const matchSector = currentSector === 'all' || ipo.sector === currentSector;
+    return matchDay && matchSector;
+  });
+
+  const n = filtered.length;
+  countEl.textContent = n + ' IPO' + (n > 1 ? 's' : '') + (n === 0 ? '' : '');
+
+  if (n === 0) {
+    list.innerHTML = `<div class="empty">Aucune IPO ce jour<br><span style="font-size:12px;margin-top:6px;display:block;">Sélectionne un autre jour ou secteur</span></div>`;
+    return;
+  }
+
+  const statusMap = { upcoming: 'status-upcoming', live: 'status-live', listed: 'status-listed' };
+  const statusLabel = { upcoming: '\u00c0 venir', live: 'Live', listed: 'Cotée' };
+
+  list.innerHTML = filtered.map(ipo => {
+    const p = perf(ipo);
+    const pLabel = perfLabel(ipo);
+    const pClass = perfClass(p);
+
+    return `
+    <div class="ipo-card" onclick="openModal(${ipo.id})">
+      <div class="ipo-card-top">
+        <div class="ipo-card-left">
+          <div class="ipo-logo">${ipo.ticker[0]}</div>
+          <div>
+            <div class="ipo-name">${ipo.name} ${ipo.country}</div>
+            <div class="ipo-meta">${ipo.ticker} \u00b7 ${ipo.exchange} \u00b7 ${ipo.sectorLabel}</div>
+          </div>
+        </div>
+        <div class="grade-badge grade-${ipo.grade}">${ipo.grade}</div>
+      </div>
+      <div class="ipo-card-bottom">
+        <div class="ipo-stats">
+          <div class="ipo-stat">
+            <div class="ipo-stat-label">Prix IPO</div>
+            <div class="ipo-stat-value">${ipo.ipoPrice ? (ipo.exchange === 'Euronext' ? '\u20ac' : '$') + ipo.ipoPrice : ipo.priceRange}</div>
+          </div>
+          ${ipo.currentPrice ? `
+          <div class="ipo-stat">
+            <div class="ipo-stat-label">Actuel</div>
+            <div class="ipo-stat-value">${ipo.exchange === 'Euronext' ? '\u20ac' : '$'}${ipo.currentPrice}</div>
+          </div>` : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="status-pill ${statusMap[ipo.status]}">${statusLabel[ipo.status]}</span>
+          <span class="perf-pill ${pClass}">${pLabel}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── CONFIG LIVE DATA ────────────────────────────────────────────────────────
+
+const REFRESH_INTERVAL = 60;
+let refreshTimer = null;
+let countdown = REFRESH_INTERVAL;
+let lastUpdate = null;
+let isMarketOpen = false;
+let liveData = {};
+
+const SECTORS_CONFIG = [
+  { name: 'Tech',      ticker: 'QQQ'     },
+  { name: 'IA',        ticker: 'BOTZ'    },
+  { name: 'Sant\u00e9',     ticker: 'XLV'     },
+  { name: '\u00c9nergie',   ticker: 'XLE'     },
+  { name: 'Finance',   ticker: 'XLF'     },
+  { name: 'Conso.',    ticker: 'XLY'     },
+  { name: 'Industrie', ticker: 'XLI'     },
+  { name: 'Immo',      ticker: 'XLRE'    },
+  { name: 'Europe',    ticker: 'EZU'     },
+  { name: 'Chine',     ticker: 'FXI'     },
+  { name: 'Crypto',    ticker: 'BTC-USD' },
+  { name: 'Or',        ticker: 'GLD'     },
+];
+
+const MOVERS_CONFIG = [
+  { ticker: 'NVDA',    name: 'NVIDIA'    },
+  { ticker: 'AAPL',    name: 'Apple'     },
+  { ticker: 'TSLA',    name: 'Tesla'     },
+  { ticker: 'AMZN',    name: 'Amazon'    },
+  { ticker: 'MSFT',    name: 'Microsoft' },
+  { ticker: 'BTC-USD', name: 'Bitcoin'   },
+  { ticker: 'META',    name: 'Meta'      },
+  { ticker: 'ASML',    name: 'ASML'      },
+];
+
+// ─── FETCH YAHOO FINANCE ─────────────────────────────────────────────────────
+
+async function fetchQuote(ticker) {
+  const urls = [
+    'https://query1.finance.yahoo.com/v6/finance/quote?symbols=' + ticker,
+    'https://query2.finance.yahoo.com/v6/finance/quote?symbols=' + ticker,
+  ];
+  for (const url of urls) {
+    try {
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(url, { signal: controller.signal, mode: 'cors' });
+      clearTimeout(tid);
+      if (!res.ok) continue;
+      const json = await res.json();
+      const q = json?.quoteResponse?.result?.[0];
+      if (!q?.regularMarketPrice) continue;
+      const price     = q.regularMarketPrice;
+      const prevClose = q.regularMarketPreviousClose || price;
+      const change    = q.regularMarketChange || (price - prevClose);
+      const changePct = q.regularMarketChangePercent || ((change / prevClose) * 100);
+      const curr      = q.currency === 'EUR' ? '\u20ac' : (q.currency === 'GBp' ? '\u00a3' : '$');
+      if (q.marketState === 'REGULAR') isMarketOpen = true;
+      return { price, change, changePct, currency: curr, state: q.marketState };
+    } catch(e) { continue; }
+  }
+  return null;
+}
+
+async function fetchAllQuotes() {
+  const allTickers = [...new Set([
+    ...SECTORS_CONFIG.map(s => s.ticker),
+    ...MOVERS_CONFIG.map(m => m.ticker),
+  ])];
+
+  // Un seul appel batch — sans headers custom pour éviter preflight CORS
+  const batchUrls = [
+    'https://query1.finance.yahoo.com/v6/finance/quote?symbols=' + allTickers.join(','),
+    'https://query2.finance.yahoo.com/v6/finance/quote?symbols=' + allTickers.join(','),
+  ];
+
+  let fetched = false;
+
+  for (const url of batchUrls) {
+    try {
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 10000);
+      // Pas de headers custom — simple request, pas de preflight
+      const res = await fetch(url, { signal: controller.signal, mode: 'cors' });
+      clearTimeout(tid);
+      if (!res.ok) continue;
+      const json = await res.json();
+      const results = json?.quoteResponse?.result;
+      if (!results?.length) continue;
+
+      results.forEach(q => {
+        if (!q?.regularMarketPrice) return;
+        const price     = q.regularMarketPrice;
+        const prevClose = q.regularMarketPreviousClose || price;
+        const change    = q.regularMarketChange || (price - prevClose);
+        const changePct = q.regularMarketChangePercent || ((change / prevClose) * 100);
+        const curr      = q.currency === 'EUR' ? '\u20ac' : (q.currency === 'GBp' ? '\u00a3' : '$');
+        if (q.marketState === 'REGULAR') isMarketOpen = true;
+        liveData[q.symbol] = { price, change, changePct, currency: curr, state: q.marketState };
+      });
+
+      fetched = true;
+      break;
+    } catch(e) { continue; }
+  }
+
+  // Fallback ticker par ticker si le batch échoue
+  if (!fetched) {
+    const results = await Promise.all(allTickers.map(t => fetchQuote(t)));
+    allTickers.forEach((ticker, idx) => { if (results[idx]) liveData[ticker] = results[idx]; });
+  }
+
+  lastUpdate = new Date();
+  updateStatusBar();
+}
+
+// ─── STATUS BAR ──────────────────────────────────────────────────────────────
+
+function updateStatusBar() {
+  const bar = document.getElementById('live-status');
+  if (!bar) return;
+  const time = lastUpdate
+    ? lastUpdate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    : '\u2014';
+  const mkt = isMarketOpen
+    ? '<span style="color:#1a6b4a;font-weight:700;">\u25cf March\u00e9 ouvert</span>'
+    : '<span style="color:#8a8780;">\u25cf March\u00e9 ferm\u00e9</span>';
+  bar.innerHTML = mkt + ' &nbsp;\u00b7&nbsp; ' + time + ' &nbsp;\u00b7&nbsp; <span id="cd-label">refresh dans ' + countdown + 's</span>';
+}
+
+async function refreshLive() {
+  const bar = document.getElementById('live-status');
+  if (bar) bar.innerHTML = '<span style="color:#8a8780;">\u27f3 Mise \u00e0 jour\u2026</span>';
+  await fetchAllQuotes();
+  renderHeatmap();
+  renderMovers();
+  countdown = REFRESH_INTERVAL;
+  if (refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(() => {
+    countdown--;
+    const cd = document.getElementById('cd-label');
+    if (cd) cd.textContent = 'refresh dans ' + countdown + 's';
+    if (countdown <= 0) { countdown = REFRESH_INTERVAL; refreshLive(); }
+  }, 1000);
+}
+
+// ─── COULEUR SELON PERF ───────────────────────────────────────────────────────
+
+function perfToStyle(pct) {
+  if (pct == null) return { bg: '#f0ede8', color: '#8a8780' };
+  if (pct >= 2)    return { bg: '#1a6b4a', color: '#ffffff' };
+  if (pct >= 0.3)  return { bg: '#c8eedd', color: '#1a6b4a' };
+  if (pct >= -0.3) return { bg: '#f0ede8', color: '#8a8780' };
+  if (pct >= -2)   return { bg: '#fce8e8', color: '#b83232' };
+  return                  { bg: '#b83232', color: '#ffffff' };
+}
+
+function fmtPrice(price, currency, ticker) {
+  if (!price) return '\u2014';
+  if (ticker === 'BTC-USD') return currency + Math.round(price).toLocaleString('fr-FR');
+  return currency + price.toFixed(2);
+}
+
+function fmtPct(pct) {
+  if (pct == null) return '\u2026';
+  return (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
+}
+
+// ─── RENDER HEATMAP ──────────────────────────────────────────────────────────
+
+function renderHeatmap() {
+  const grid = document.getElementById('heatmap-grid');
+  if (!grid) return;
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px;';
+  grid.innerHTML = SECTORS_CONFIG.map(s => {
+    const d = liveData[s.ticker];
+    const { bg, color } = perfToStyle(d?.changePct ?? null);
+    return '<div style="background:' + bg + ';border-radius:12px;padding:12px 8px;text-align:center;min-height:84px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;">'
+      + '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:' + color + ';opacity:0.85;">' + s.name + '</div>'
+      + '<div style="font-size:20px;font-weight:700;font-family:DM Serif Display,serif;color:' + color + ';line-height:1.1;">' + fmtPct(d?.changePct ?? null) + '</div>'
+      + '<div style="font-size:9px;color:' + color + ';opacity:0.7;">' + (d ? fmtPrice(d.price, d.currency, s.ticker) : '\u2014') + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+// ─── RENDER MOVERS ───────────────────────────────────────────────────────────
+
+function renderMovers() {
+  const list = document.getElementById('movers-list');
+  if (!list) return;
+  const items = MOVERS_CONFIG.map(m => ({ ...m, data: liveData[m.ticker] || null }));
+  items.sort((a, b) => {
+    if (!a.data && !b.data) return 0;
+    if (!a.data) return 1;
+    if (!b.data) return -1;
+    return Math.abs(b.data.changePct) - Math.abs(a.data.changePct);
+  });
+  list.innerHTML = items.map(m => {
+    const d = m.data;
+    const pct = d?.changePct ?? null;
+    const pos = pct !== null ? pct >= 0 : true;
+    const perfBg    = pct === null ? '#f0ede8' : (pos ? '#edf7f2' : '#fdf0f0');
+    const perfColor = pct === null ? '#8a8780' : (pos ? '#1a6b4a' : '#b83232');
+    const disp = m.ticker === 'BTC-USD' ? 'BTC' : m.ticker;
+    return '<div style="background:#fff;border:1px solid #e8e6e1;border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">'
+      + '<div style="display:flex;align-items:center;gap:10px;">'
+      + '<div style="width:38px;height:38px;border-radius:9px;background:#f9f8f6;border:1px solid #e8e6e1;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;font-family:DM Serif Display,serif;flex-shrink:0;">' + disp[0] + '</div>'
+      + '<div><div style="font-size:14px;font-weight:700;">' + disp + '</div><div style="font-size:11px;color:#8a8780;">' + m.name + '</div></div>'
+      + '</div>'
+      + '<div style="display:flex;align-items:center;gap:10px;">'
+      + '<div style="font-size:14px;font-weight:600;">' + (d ? fmtPrice(d.price, d.currency, m.ticker) : '\u2014') + '</div>'
+      + '<div style="font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;background:' + perfBg + ';color:' + perfColor + ';">' + fmtPct(pct) + '</div>'
+      + '</div></div>';
+  }).join('');
+}
+
+// ─── NAV ─────────────────────────────────────────────────────────────────────
+
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  document.querySelectorAll('.nav-tab')[tab === 'ipo' ? 0 : 1].classList.add('active');
+  if (tab === 'bourse') {
+    renderHeatmap();
+    renderMovers();
+    if (Object.keys(liveData).length === 0) refreshLive();
+  }
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+
+fetchIPOs(); // Charge les vraies IPOs depuis FMP (fallback mocké si indispo)
+
+// ─── MODAL ───────────────────────────────────────────────────────────────────
+
+function openModal(id) {
+  const ipo = IPOS.find(i => i.id === id);
+  if (!ipo) return;
+
+  const overlay = document.getElementById('modal-overlay');
+  const modal = document.getElementById('modal');
+  const content = document.getElementById('modal-content');
+
+  const p = perf(ipo);
+  const pLabel = perfLabel(ipo);
+  const pClass = perfClass(p);
+  const inWatch = watchlist.has(id);
+
+  content.innerHTML = `
+    <div class="modal-header">
+      <div class="modal-logo">${ipo.ticker[0]}</div>
+      <div style="flex:1">
+        <div class="modal-title">${ipo.name} ${ipo.country}</div>
+        <div class="modal-sub">${ipo.ticker} · ${ipo.exchange} · ${ipo.sectorLabel}</div>
+        <div class="modal-tags">
+          ${ipo.tags.map(t => `<span class="tag">${t}</span>`).join('')}
+          <span class="perf-pill ${pClass}" style="font-size:11px;padding:3px 8px;">${pLabel}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-body">
+
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px;">${ipo.description}</p>
+
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-box-label">Market Cap</div>
+          <div class="stat-box-value">$${ipo.marketCap}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Revenus</div>
+          <div class="stat-box-value">${ipo.revenue}</div>
+          <div class="stat-box-sub">${ipo.revenueGrowth} YoY</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Marge brute</div>
+          <div class="stat-box-value">${ipo.grossMargin}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Burn rate</div>
+          <div class="stat-box-value ${ipo.burnRate.startsWith('+') ? 'pos' : 'neg'}">${ipo.burnRate}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Prix IPO</div>
+          <div class="stat-box-value">${ipo.ipoPrice ? '$'+ipo.ipoPrice : ipo.priceRange}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Underwriter</div>
+          <div class="stat-box-value" style="font-size:13px;">${ipo.underwriter}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">VC Backing</div>
+          <div class="stat-box-value" style="font-size:12px;">${ipo.vcBacking}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">TAM</div>
+          <div class="stat-box-value">${ipo.tam}</div>
+        </div>
+      </div>
+
+      <!-- RADAR -->
+      <div class="radar-section">
+        <div class="radar-title">
+          <span>Analyse multicritère</span>
+          <span style="font-size:11px;color:var(--muted);font-weight:400;">Pépite Index : <strong>${ipo.pepiteIndex}/100</strong></span>
+        </div>
+        <canvas id="radar" width="240" height="200"></canvas>
+        <div class="radar-legend">
+          <div class="radar-legend-item"><div class="radar-dot"></div>Fondamentaux (${ipo.scores.fondamentaux}/10)</div>
+          <div class="radar-legend-item"><div class="radar-dot"></div>Marché (${ipo.scores.marche}/10)</div>
+          <div class="radar-legend-item"><div class="radar-dot"></div>Timing (${ipo.scores.timing}/10)</div>
+          <div class="radar-legend-item"><div class="radar-dot"></div>VC Quality (${ipo.scores.vc}/10)</div>
+          <div class="radar-legend-item"><div class="radar-dot"></div>Sentiment (${ipo.scores.sentiment}/10)</div>
+        </div>
+      </div>
+
+      <!-- GRADING -->
+      <div class="grading-section">
+        <div class="grading-header">
+          <div class="grading-title">Grading & Analyse IA</div>
+          <div class="big-grade grade-${ipo.grade}">${ipo.grade}</div>
+        </div>
+
+        <div class="verdict-pill ${verdictClass(ipo.verdict)}">
+          ${verdictIcon(ipo.verdict)} ${ipo.verdict}
+        </div>
+
+        <div class="thesis-box" id="thesis-box">
+          <div class="thesis-loading">
+            <span>Analyse en cours</span>
+            <div class="dot-pulse"><span></span><span></span><span></span></div>
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-bottom:8px;">Risques identifiés</div>
+        <div class="risks-list">
+          ${ipo.risks.map(r => `
+          <div class="risk-item">
+            <span class="risk-icon">▲</span>
+            <span>${r}</span>
+          </div>`).join('')}
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="section-title" style="margin-bottom:10px;">Score détaillé</div>
+        ${[
+          ['Fondamentaux', ipo.scores.fondamentaux],
+          ['Positionnement marché', ipo.scores.marche],
+          ['Timing IPO', ipo.scores.timing],
+          ['Qualité VC', ipo.scores.vc],
+          ['Sentiment', ipo.scores.sentiment]
+        ].map(([label, val]) => `
+        <div class="score-bar-row">
+          <div class="score-bar-label">${label}</div>
+          <div class="score-bar-track">
+            <div class="score-bar-fill" style="width:${val*10}%"></div>
+          </div>
+          <div class="score-bar-value">${val}</div>
+        </div>`).join('')}
+      </div>
+
+      <!-- NEWS -->
+      <div class="news-section">
+        <div class="section-title">Actualités récentes</div>
+        ${ipo.news.map(n => `
+        <div class="news-item">
+          <div class="news-source">${n.source}</div>
+          <div class="news-headline">${n.headline}</div>
+          <div class="news-date">${n.date}</div>
+        </div>`).join('')}
+      </div>
+
+      <!-- CTA -->
+      <div class="cta-bar">
+        <button class="btn-primary" onclick="addToPortfolio(${ipo.id})">+ Portefeuille simulé</button>
+        <button class="btn-secondary ${inWatch ? 'in-watchlist' : ''}" id="watch-btn" onclick="toggleWatch(${ipo.id})">
+          ${inWatch ? '★ Suivi' : '☆ Suivre'}
+        </button>
+      </div>
+
+    </div>
+  `;
+
+  overlay.classList.add('open');
+  modal.classList.add('open');
+
+  // Draw radar after DOM is ready
+  setTimeout(() => {
+    drawRadar(ipo.scores);
+    generateThesis(ipo);
+  }, 100);
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.getElementById('modal').classList.remove('open');
+}
+
+// ─── RADAR CHART ─────────────────────────────────────────────────────────────
+
+function drawRadar(scores) {
+  const canvas = document.getElementById('radar');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const cx = 120, cy = 100, r = 80;
+  const labels = ['Fond.', 'Marché', 'Timing', 'VC', 'Sent.'];
+  const values = [scores.fondamentaux, scores.marche, scores.timing, scores.vc, scores.sentiment];
+  const n = 5;
+
+  ctx.clearRect(0, 0, 240, 200);
+
+  // Grid
+  for (let ring = 1; ring <= 5; ring++) {
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+      const angle = (i * 2 * Math.PI / n) - Math.PI / 2;
+      const x = cx + (r * ring / 5) * Math.cos(angle);
+      const y = cy + (r * ring / 5) * Math.sin(angle);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = '#e8e6e1';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Axes
+  for (let i = 0; i < n; i++) {
+    const angle = (i * 2 * Math.PI / n) - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+    ctx.strokeStyle = '#e8e6e1';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Data polygon
+  ctx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const angle = (i * 2 * Math.PI / n) - Math.PI / 2;
+    const val = values[i] / 10;
+    const x = cx + r * val * Math.cos(angle);
+    const y = cy + r * val * Math.sin(angle);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(26,25,22,0.08)';
+  ctx.fill();
+  ctx.strokeStyle = '#1a1916';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Dots
+  for (let i = 0; i < n; i++) {
+    const angle = (i * 2 * Math.PI / n) - Math.PI / 2;
+    const val = values[i] / 10;
+    const x = cx + r * val * Math.cos(angle);
+    const y = cy + r * val * Math.sin(angle);
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#1a1916';
+    ctx.fill();
+  }
+
+  // Labels
+  ctx.fillStyle = '#8a8780';
+  ctx.font = '10px DM Sans, sans-serif';
+  ctx.textAlign = 'center';
+  for (let i = 0; i < n; i++) {
+    const angle = (i * 2 * Math.PI / n) - Math.PI / 2;
+    const x = cx + (r + 16) * Math.cos(angle);
+    const y = cy + (r + 16) * Math.sin(angle) + 3;
+    ctx.fillText(labels[i], x, y);
+  }
+}
+
+// ─── CLAUDE API — THESIS ─────────────────────────────────────────────────────
+
+async function generateThesis(ipo) {
+  const box = document.getElementById('thesis-box');
+  if (!box) return;
+
+  const prompt = `Tu es un analyste IPO senior. Génère une thèse d'investissement concise (3 phrases max) pour cette IPO.
+
+Société : ${ipo.name} (${ipo.ticker})
+Secteur : ${ipo.sectorLabel}
+Revenus : ${ipo.revenue} (${ipo.revenueGrowth} YoY)
+Marge brute : ${ipo.grossMargin}
+Burn rate : ${ipo.burnRate}
+Underwriter : ${ipo.underwriter}
+VC Backing : ${ipo.vcBacking}
+Grade : ${ipo.grade} / Verdict : ${ipo.verdict}
+Pépite Index : ${ipo.pepiteIndex}/100
+
+Réponds UNIQUEMENT avec la thèse, sans titre, sans bullet points. Ton français doit être précis, direct, professionnel. Si AVOID, sois honnêtement négatif. Si BUY, identifie le catalyseur principal.`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
+
+    if (box) {
+      box.style.transition = 'opacity 0.3s';
+      box.style.opacity = '0';
+      setTimeout(() => {
+        box.textContent = text;
+        box.style.opacity = '1';
+      }, 300);
+    }
+  } catch (e) {
+    if (box) box.textContent = "Analyse temporairement indisponible.";
+  }
+}
+
+// ─── ACTIONS ─────────────────────────────────────────────────────────────────
+
+function toggleWatch(id) {
+  const btn = document.getElementById('watch-btn');
+  if (watchlist.has(id)) {
+    watchlist.delete(id);
+    if (btn) { btn.textContent = '☆ Suivre'; btn.classList.remove('in-watchlist'); }
+  } else {
+    watchlist.add(id);
+    if (btn) { btn.textContent = '★ Suivi'; btn.classList.add('in-watchlist'); }
+  }
+}
+
+function addToPortfolio(id) {
+  const ipo = IPOS.find(i => i.id === id);
+  if (!ipo) return;
+  const btn = document.querySelector('.btn-primary');
+  if (btn) { btn.textContent = '\u2713 Ajout\u00e9'; btn.style.background = 'var(--green)'; }
+  setTimeout(closeModal, 800);
+}
+</script>
+</body>
+</html>
