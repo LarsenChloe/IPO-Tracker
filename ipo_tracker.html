@@ -839,8 +839,9 @@ const WD = getWeekDates();
 
 // ─── FMP API ─────────────────────────────────────────────────────────────────
 
-const FMP_KEY = 'pIzBoQBt5HwovKLVOVkRIZdklUIo4mdq';
-const FMP_BASE = 'https://financialmodelingprep.com/api/v3';
+const PROXY_BASE = 'https://ipo-lens-proxy.larsen-hocine.workers.dev';
+const FMP_BASE   = PROXY_BASE + '/fmp';
+const FMP_KEY    = ''; // Clé gérée côté Worker
 
 // Cache IPOs chargées depuis FMP
 let IPOS = [];
@@ -907,7 +908,7 @@ async function fetchIPOs() {
     const fmt  = d => d.toISOString().split('T')[0];
 
     // Requête simple sans headers — évite le preflight CORS
-    const url = FMP_BASE + '/ipo_calendar?from=' + fmt(from) + '&to=' + fmt(to) + '&apikey=' + FMP_KEY;
+    const url = FMP_BASE + '/ipo_calendar?from=' + fmt(from) + '&to=' + fmt(to);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -1155,8 +1156,8 @@ const MOVERS_CONFIG = [
 
 async function fetchQuote(ticker) {
   const urls = [
-    'https://query1.finance.yahoo.com/v6/finance/quote?symbols=' + ticker,
-    'https://query2.finance.yahoo.com/v6/finance/quote?symbols=' + ticker,
+    PROXY_BASE + '/yahoo?symbols=' + ticker,
+    PROXY_BASE + '/yahoo?symbols=' + ticker + '&src=q2',
   ];
   for (const url of urls) {
     try {
@@ -1188,8 +1189,8 @@ async function fetchAllQuotes() {
 
   // Un seul appel batch — sans headers custom pour éviter preflight CORS
   const batchUrls = [
-    'https://query1.finance.yahoo.com/v6/finance/quote?symbols=' + allTickers.join(','),
-    'https://query2.finance.yahoo.com/v6/finance/quote?symbols=' + allTickers.join(','),
+    PROXY_BASE + '/yahoo?symbols=' + allTickers.join(','),
+    PROXY_BASE + '/yahoo?symbols=' + allTickers.join(',') + '&src=q2',
   ];
 
   let fetched = false;
