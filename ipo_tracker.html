@@ -1616,7 +1616,7 @@ async function generateThesis(ipo) {
       ? `Tu es un analyste IPO senior. Voici un extrait du prospectus S-1 officiel SEC pour ${ipo.name}.\n\nTEXTE S-1 :\n${prospectusText.slice(0, 55000)}\n\n---\nExtrais ces données EXACTEMENT en JSON (rien d'autre) :\n{"revenue":"ex $45M ou N/D","revenueGrowth":"ex +87% YoY ou N/D","grossMargin":"ex 72% ou N/D","burnRate":"ex -$4M/trim ou N/D","marketCap":"ex $890M ou N/D","underwriter":"ex Goldman Sachs ou N/D","priceRange":"ex $14-$18 ou N/D","tam":"ex $45B ou N/D","vcBacking":"ex Sequoia ou N/D","thesis":"Thèse 3 phrases max en français, directe et professionnelle","risks":["risque 1","risque 2","risque 3"],"fondamentaux":7,"marche":6,"timing":7,"vc":5,"sentiment":6,"grade":"A","verdict":"BUY","pepiteIndex":74}`
       : `Analyse IPO: ${ipo.name}, secteur: ${ipo.sectorLabel}, exchange: ${ipo.exchange}.\nJSON uniquement: {"revenue":"N/D","revenueGrowth":"N/D","grossMargin":"N/D","burnRate":"N/D","marketCap":"N/D","underwriter":"N/D","priceRange":"N/D","tam":"N/D","vcBacking":"N/D","thesis":"${ipo.name} a déposé un S-1 auprès de la SEC dans le secteur ${ipo.sectorLabel}. Données financières détaillées disponibles dans le prospectus officiel.","risks":["Prix d'introduction non fixé","Consulter le prospectus S-1 officiel","Données financières à valider"],"fondamentaux":5,"marche":5,"timing":5,"vc":5,"sentiment":5,"grade":"B","verdict":"WATCH","pepiteIndex":50}`;
 
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(PROXY_BASE + '/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
