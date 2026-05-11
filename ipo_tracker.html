@@ -914,6 +914,7 @@ async function fetchIPOs() {
     if (!Array.isArray(items) || items.length === 0) throw new Error('Pas de donn\u00e9es');
 
     IPOS = items.map((item, idx) => {
+      const sec     = mapSector(item.sicDesc || '');
       const status  = mapStatus(item.date);
       const grading = calcGrade({ exchange: item.exchange, status });
 
@@ -921,8 +922,8 @@ async function fetchIPOs() {
         id: idx + 1,
         name: item.name || 'N/A',
         ticker: item.ticker || '\u2014',
-        sector: 'other',
-        sectorLabel: item.formType || 'S-1',
+        sector: sec.key,
+        sectorLabel: item.sicDesc || sec.label || item.formType || 'S-1',
         exchange: item.exchange || '\u2014',
         country: '\uD83C\uDDFA\uD83C\uDDF8',
         status,
@@ -937,10 +938,12 @@ async function fetchIPOs() {
         verdict: grading.verdict,
         pepiteIndex: grading.pepiteIndex,
         scores: { fondamentaux: 5, marche: 5, timing: 5, vc: 5, sentiment: 5 },
-        tags: [item.formType || 'S-1', 'SEC EDGAR'],
-        description: 'D\u00e9p\u00f4t ' + (item.formType || 'S-1') + ' aupr\u00e8s de la SEC. Voir le prospectus complet sur EDGAR.',
-        risks: ['Donn\u00e9es en cours de chargement — consulter le prospectus SEC'],
-        news: item.filingUrl ? [{ source: 'SEC EDGAR', headline: 'Voir le d\u00e9p\u00f4t officiel', date: item.date, url: item.filingUrl }] : [],
+        tags: [item.sicDesc || 'SEC', item.exchange !== '\u2014' ? item.exchange : '', item.formType || 'S-1'].filter(t => t && t !== '\u2014'),
+        description: (item.sicDesc ? 'Secteur\u00a0: ' + item.sicDesc + '. ' : '')
+          + 'D\u00e9p\u00f4t ' + (item.formType || 'S-1') + ' d\u00e9pos\u00e9 aupr\u00e8s de la SEC'
+          + (item.stateInc ? ', soci\u00e9t\u00e9 incorpor\u00e9e dans l\u2019\u00e9tat de ' + item.stateInc : '') + '.',
+        risks: ['Prix d\u2019introduction non encore fix\u00e9', 'Consulter le prospectus S-1 officiel sur SEC EDGAR'],
+        news: item.filingUrl ? [{ source: 'SEC EDGAR', headline: 'Voir le d\u00e9p\u00f4t officiel S-1', date: item.date }] : [],
       };
     });
 
