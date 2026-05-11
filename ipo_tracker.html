@@ -1369,7 +1369,7 @@ function openModal(id) {
 
       <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px;">${ipo.description}</p>
 
-      <div class="stats-grid">
+      <div class="stats-grid" id="modal-stats-live">
         <div class="stat-box">
           <div class="stat-box-label">Market Cap</div>
           <div class="stat-box-value">$${ipo.marketCap}</div>
@@ -1425,10 +1425,10 @@ function openModal(id) {
       <div class="grading-section">
         <div class="grading-header">
           <div class="grading-title">Grading & Analyse IA</div>
-          <div class="big-grade grade-${ipo.grade}">${ipo.grade}</div>
+          <div class="big-grade grade-${ipo.grade}" id="modal-grade-badge">${ipo.grade}</div>
         </div>
 
-        <div class="verdict-pill ${verdictClass(ipo.verdict)}">
+        <div class="verdict-pill ${verdictClass(ipo.verdict)}" id="modal-verdict">
           ${verdictIcon(ipo.verdict)} ${ipo.verdict}
         </div>
 
@@ -1440,7 +1440,7 @@ function openModal(id) {
         </div>
 
         <div class="section-title" style="margin-bottom:8px;">Risques identifiés</div>
-        <div class="risks-list">
+        <div class="risks-list" id="modal-risks">
           ${ipo.risks.map(r => `
           <div class="risk-item">
             <span class="risk-icon">▲</span>
@@ -1451,7 +1451,7 @@ function openModal(id) {
         <div class="divider"></div>
 
         <div class="section-title" style="margin-bottom:10px;">Score détaillé</div>
-        ${[
+        <div id="modal-score-bars">${[
           ['Fondamentaux', ipo.scores.fondamentaux],
           ['Positionnement marché', ipo.scores.marche],
           ['Timing IPO', ipo.scores.timing],
@@ -1464,7 +1464,7 @@ function openModal(id) {
             <div class="score-bar-fill" style="width:${val*10}%"></div>
           </div>
           <div class="score-bar-value">${val}</div>
-        </div>`).join('')}
+        </div>`).join('')}</div>
       </div>
 
       <!-- NEWS -->
@@ -1583,51 +1583,118 @@ function drawRadar(scores) {
   }
 }
 
-// ─── CLAUDE API — THESIS ─────────────────────────────────────────────────────
+// ─── CLAUDE API — EXTRACTION S-1 + THÈSE ─────────────────────────────────────────────
 
 async function generateThesis(ipo) {
   const box = document.getElementById('thesis-box');
   if (!box) return;
 
-  const prompt = `Tu es un analyste IPO senior. Génère une thèse d'investissement concise (3 phrases max) pour cette IPO.
+  box.innerHTML = '<div class="thesis-loading"><span>Lecture du prospectus S-1…</span><div class="dot-pulse"><span></span><span></span><span></span></div></div>';
 
-Société : ${ipo.name} (${ipo.ticker})
-Secteur : ${ipo.sectorLabel}
-Revenus : ${ipo.revenue} (${ipo.revenueGrowth} YoY)
-Marge brute : ${ipo.grossMargin}
-Burn rate : ${ipo.burnRate}
-Underwriter : ${ipo.underwriter}
-VC Backing : ${ipo.vcBacking}
-Grade : ${ipo.grade} / Verdict : ${ipo.verdict}
-Pépite Index : ${ipo.pepiteIndex}/100
+  let prospectusText = null;
 
-Réponds UNIQUEMENT avec la thèse, sans titre, sans bullet points. Ton français doit être précis, direct, professionnel. Si AVOID, sois honnêtement négatif. Si BUY, identifie le catalyseur principal.`;
+  // 1. Récupérer le texte du S-1 si on a un CIK
+  if (ipo.cik && ipo.cik !== '') {
+    try {
+      box.innerHTML = '<div class="thesis-loading"><span>Téléchargement S-1 EDGAR…</span><div class="dot-pulse"><span></span><span></span><span></span></div></div>';
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 20000);
+      const res = await fetch(PROXY_BASE + '/prospectus?cik=' + ipo.cik, { signal: controller.signal });
+      clearTimeout(tid);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.text && data.text.length > 500) prospectusText = data.text;
+      }
+    } catch(e) { console.warn('Prospectus fetch:', e.message); }
+  }
 
+  box.innerHTML = '<div class="thesis-loading"><span>Analyse IA en cours…</span><div class="dot-pulse"><span></span><span></span><span></span></div></div>';
+
+  // 2. Appel Claude
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const prompt = prospectusText
+      ? `Tu es un analyste IPO senior. Voici un extrait du prospectus S-1 officiel SEC pour ${ipo.name}.\n\nTEXTE S-1 :\n${prospectusText.slice(0, 55000)}\n\n---\nExtrais ces données EXACTEMENT en JSON (rien d'autre) :\n{"revenue":"ex $45M ou N/D","revenueGrowth":"ex +87% YoY ou N/D","grossMargin":"ex 72% ou N/D","burnRate":"ex -$4M/trim ou N/D","marketCap":"ex $890M ou N/D","underwriter":"ex Goldman Sachs ou N/D","priceRange":"ex $14-$18 ou N/D","tam":"ex $45B ou N/D","vcBacking":"ex Sequoia ou N/D","thesis":"Thèse 3 phrases max en français, directe et professionnelle","risks":["risque 1","risque 2","risque 3"],"fondamentaux":7,"marche":6,"timing":7,"vc":5,"sentiment":6,"grade":"A","verdict":"BUY","pepiteIndex":74}`
+      : `Analyse IPO: ${ipo.name}, secteur: ${ipo.sectorLabel}, exchange: ${ipo.exchange}.\nJSON uniquement: {"revenue":"N/D","revenueGrowth":"N/D","grossMargin":"N/D","burnRate":"N/D","marketCap":"N/D","underwriter":"N/D","priceRange":"N/D","tam":"N/D","vcBacking":"N/D","thesis":"${ipo.name} a déposé un S-1 auprès de la SEC dans le secteur ${ipo.sectorLabel}. Données financières détaillées disponibles dans le prospectus officiel.","risks":["Prix d'introduction non fixé","Consulter le prospectus S-1 officiel","Données financières à valider"],"fondamentaux":5,"marche":5,"timing":5,"vc":5,"sentiment":5,"grade":"B","verdict":"WATCH","pepiteIndex":50}`;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
-        messages: [{ role: "user", content: prompt }]
+        messages: [{ role: 'user', content: prompt }]
       })
     });
 
     const data = await res.json();
-    const text = data.content?.[0]?.text || '';
+    let text = (data.content?.[0]?.text || '').replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
 
-    if (box) {
+    try {
+      const p = JSON.parse(text);
+      // Mettre à jour les données IPO
+      if (p.revenue)       ipo.revenue      = p.revenue;
+      if (p.revenueGrowth) ipo.revenueGrowth= p.revenueGrowth;
+      if (p.grossMargin)   ipo.grossMargin  = p.grossMargin;
+      if (p.burnRate)      ipo.burnRate     = p.burnRate;
+      if (p.marketCap)     ipo.marketCap    = p.marketCap;
+      if (p.underwriter)   ipo.underwriter  = p.underwriter;
+      if (p.priceRange)    ipo.priceRange   = p.priceRange;
+      if (p.tam)           ipo.tam          = p.tam;
+      if (p.vcBacking)     ipo.vcBacking    = p.vcBacking;
+      if (p.grade)         ipo.grade        = p.grade;
+      if (p.verdict)       ipo.verdict      = p.verdict;
+      if (p.pepiteIndex)   ipo.pepiteIndex  = p.pepiteIndex;
+      if (p.risks)         ipo.risks        = p.risks;
+      if (p.fondamentaux)  ipo.scores       = { fondamentaux: p.fondamentaux, marche: p.marche, timing: p.timing, vc: p.vc, sentiment: p.sentiment };
+
+      // Rafraîchir le modal
+      updateModalStats(ipo);
+      const gb = document.getElementById('modal-grade-badge');
+      if (gb) { gb.className = 'big-grade grade-' + ipo.grade; gb.textContent = ipo.grade; }
+      const vd = document.getElementById('modal-verdict');
+      if (vd) { vd.className = 'verdict-pill ' + verdictClass(ipo.verdict); vd.innerHTML = verdictIcon(ipo.verdict) + ' ' + ipo.verdict; }
+      const rk = document.getElementById('modal-risks');
+      if (rk) rk.innerHTML = ipo.risks.map(r => '<div class="risk-item"><span class="risk-icon">▲</span><span>' + r + '</span></div>').join('');
+      updateScoreBars(ipo.scores);
+      drawRadar(ipo.scores);
+
       box.style.transition = 'opacity 0.3s';
       box.style.opacity = '0';
-      setTimeout(() => {
-        box.textContent = text;
-        box.style.opacity = '1';
-      }, 300);
+      setTimeout(() => { box.textContent = p.thesis || 'Voir prospectus S-1.'; box.style.opacity = '1'; }, 300);
+
+    } catch(pe) {
+      box.style.opacity = '0';
+      setTimeout(() => { box.textContent = text; box.style.opacity = '1'; }, 300);
     }
-  } catch (e) {
-    if (box) box.textContent = "Analyse temporairement indisponible.";
+  } catch(e) {
+    box.textContent = 'Analyse temporairement indisponible.';
   }
+}
+
+function updateModalStats(ipo) {
+  const grid = document.getElementById('modal-stats-live');
+  if (!grid) return;
+  grid.innerHTML =
+    '<div class="stat-box"><div class="stat-box-label">Market Cap</div><div class="stat-box-value">' + ipo.marketCap + '</div></div>' +
+    '<div class="stat-box"><div class="stat-box-label">Revenus</div><div class="stat-box-value">' + ipo.revenue + '</div><div class="stat-box-sub">' + ipo.revenueGrowth + ' YoY</div></div>' +
+    '<div class="stat-box"><div class="stat-box-label">Marge brute</div><div class="stat-box-value">' + ipo.grossMargin + '</div></div>' +
+    '<div class="stat-box"><div class="stat-box-label">Burn rate</div><div class="stat-box-value ' + (ipo.burnRate && ipo.burnRate.startsWith('+') ? 'pos' : 'neg') + '">' + ipo.burnRate + '</div></div>' +
+    '<div class="stat-box"><div class="stat-box-label">Prix IPO</div><div class="stat-box-value">' + (ipo.ipoPrice ? '$' + ipo.ipoPrice : ipo.priceRange) + '</div></div>' +
+    '<div class="stat-box"><div class="stat-box-label">Underwriter</div><div class="stat-box-value" style="font-size:13px;">' + ipo.underwriter + '</div></div>' +
+    '<div class="stat-box"><div class="stat-box-label">VC Backing</div><div class="stat-box-value" style="font-size:12px;">' + ipo.vcBacking + '</div></div>' +
+    '<div class="stat-box"><div class="stat-box-label">TAM</div><div class="stat-box-value">' + ipo.tam + '</div></div>';
+}
+
+function updateScoreBars(scores) {
+  const c = document.getElementById('modal-score-bars');
+  if (!c) return;
+  c.innerHTML = [
+    ['Fondamentaux', scores.fondamentaux],
+    ['Marché',  scores.marche],
+    ['Timing IPO',   scores.timing],
+    ['Qualité VC', scores.vc],
+    ['Sentiment',    scores.sentiment],
+  ].map(([l,v]) => '<div class="score-bar-row"><div class="score-bar-label">' + l + '</div><div class="score-bar-track"><div class="score-bar-fill" style="width:' + (v*10) + '%"></div></div><div class="score-bar-value">' + v + '</div></div>').join('');
 }
 
 // ─── ACTIONS ─────────────────────────────────────────────────────────────────
